@@ -12,6 +12,8 @@ namespace BradlBot
 {
     class Program
     {
+        public static DateTime TimeStarted = DateTime.Now;
+        
         public DiscordClient Client { get; set; }
         public CommandsNextModule Commands { get; set; }
         
@@ -114,6 +116,9 @@ namespace BradlBot
             
             //Connect and login
             await this.Client.ConnectAsync();
+            
+            //Save time started
+            TimeStarted = DateTime.UtcNow;
             
             //Prevent premature quitting
             await Task.Delay(-1);
