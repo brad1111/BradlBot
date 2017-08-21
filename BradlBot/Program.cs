@@ -3,6 +3,8 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
+using DSharpPlus.CommandsNext;
+using DSharpPlus.CommandsNext.Exceptions;
 using Newtonsoft.Json;
 
 
@@ -11,10 +13,11 @@ namespace BradlBot
     class Program
     {
         public DiscordClient Client { get; set; }
+        public CommandsNextModule Commands { get; set; }
         
         public static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("BradlBot Starting");
             
             //Setup config 
             if (!File.Exists("config.json"))
@@ -60,14 +63,17 @@ namespace BradlBot
 
                     AutoReconnect = true,
                     LogLevel = LogLevel.Debug,
-                    UseInternalLogHandler = true
+                    UseInternalLogHandler = true,
                 };
-
-                await SetupBotAsync(cfg);
+                
+                await SetupBotAsync(cfg, cfgjson);
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error with config or runtime error: {e.GetType()} - {e.Message}");
+#if DEBUG
+                throw;
+#endif
             }
             finally
             {
@@ -78,7 +84,7 @@ namespace BradlBot
         }
         
         
-        public async Task SetupBotAsync(DiscordConfig cfg)
+        public async Task SetupBotAsync(DiscordConfig cfg, ConfigJson cfgjson)
         {
 
             //Create instance of client
@@ -88,6 +94,23 @@ namespace BradlBot
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
             this.Client.ClientError += this.Client_ClientError;
+            
+            //Comands config
+            var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
+            {
+                StringPrefix = cfgjson.CommandPrefix,
+                EnableDms = true,
+                EnableMentionPrefix = true
+            };
+
+            this.Commands = this.Client.UseCommandsNext(ccfg);
+                
+            //Commands Events
+            this.Commands.CommandExecuted += this.Command_CommandExecuted;
+            this.Commands.CommandErrored += this.Command_CommandError;
+                
+            //Commands registration (none yet)
+            this.Commands.RegisterCommands<UserCommands>();
             
             //Connect and login
             await this.Client.ConnectAsync();
@@ -116,6 +139,34 @@ namespace BradlBot
             //Log guild that was sent
             e.Client.DebugLogger.LogMessage(LogLevel.Error, "BradlBot",$"Exception: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);
             return Task.CompletedTask;
+        }
+
+        private Task Command_CommandExecuted(CommandExecutedEventArgs e)
+        {
+            e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot",
+                $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}' on {e.Context.Guild.Name} - {e.Context.Channel.Name}",
+                DateTime.Now);
+            return Task.CompletedTask;
+        }
+
+        private async Task Command_CommandError(CommandErrorEventArgs e)
+        {
+            e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "BradlBot",$"{e.Context.User.Username} tried to run '{e.Command?.QualifiedName ?? "<invalid_cmd>"}' on {e.Context.Guild.Name} - {e.Context.Channel.Name} but it gave the error: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);   
+                    
+            //Check to see if lack of permisions
+            if (e.Exception is ChecksFailedException)
+            {
+                var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
+                        
+                //Do an embed
+                var embed = new DiscordEmbed()
+                {
+                    Title = "Access Denied",
+                    Description = $"{emoji} You do not have permission to execute this.",
+                    Color = 0xFF0000
+                };
+                await e.Context.RespondAsync("", embed: embed);
+            }
         }
     }
     
