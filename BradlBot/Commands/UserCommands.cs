@@ -4,7 +4,7 @@ using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
-namespace BradlBot
+namespace BradlBot.Commands
 {
     public class UserCommands
     {

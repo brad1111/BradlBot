@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
@@ -113,6 +114,7 @@ namespace BradlBot
                 
             //Commands registration (none yet)
             this.Commands.RegisterCommands<UserCommands>();
+            this.Commands.RegisterCommands<ModCommands>();
             
             //Connect and login
             await this.Client.ConnectAsync();
