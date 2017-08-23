@@ -47,7 +47,7 @@ namespace BradlBot.Commands
             Respond(ctx, "Success", $"{successEmoji}{successMessage}",0x00FF00);
         }
         
-        private static void Respond(CommandContext ctx, string title, string message, int color)
+        public static void Respond(CommandContext ctx, string title, string message, int color)
         {
             DiscordEmbed embed = new DiscordEmbed()
             {
@@ -59,7 +59,7 @@ namespace BradlBot.Commands
         }
 
 
-        public static void UnlockGuild(DiscordGuild guild, object TypeOfResponse)
+        /*public static void UnlockGuild(DiscordGuild guild, object TypeOfResponse)
         {
             if (TypeOfResponse is YesNoResponse)
             {
@@ -70,6 +70,6 @@ namespace BradlBot.Commands
                 ResponseStorage.ListOfYesNoResponses.Remove(YNResp);
                 YesNoResponse.LockedGuilds.Remove(guild);
             }
-        }
+        }*/
     }
 }
