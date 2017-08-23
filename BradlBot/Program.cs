@@ -97,6 +97,7 @@ namespace BradlBot
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
             this.Client.ClientError += this.Client_ClientError;
+            this.Client.MessageCreated += Checks.MessageCreated_Checks;
             
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()

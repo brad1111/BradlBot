@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using DSharpPlus;
+using DSharpPlus.CommandsNext;
 
 namespace BradlBot.Commands
 {
@@ -9,8 +11,18 @@ namespace BradlBot.Commands
     /// </summary>
     public class ResponseStorage
     {
+        public static List<string> ValidResponses = new List<string>()
+        {
+            "Y","N"
+        };
+        
+        public static List<YesNoResponse> ListOfYesNoResponses = new List<YesNoResponse>();
+        
         #region YesNoResponse
-
+/*            public static DiscordGuild guild { get; set; }
+            public static List<string> YNResponses = new List<string>(){"Y","N"};
+        
+        
             public static List<DiscordUser> DiscordUsersToInteractWithYN
             {
                 get => YNCommandInProgress ? _discordUsersToInteractWithYN : null;
@@ -35,17 +47,17 @@ namespace BradlBot.Commands
     
             private static DiscordUser _userToRespond;
         
-            public static ResponseAction? ResponseActionYN
+            public static YNResponseAction? YnResponseActionYn
             {
-                get => YNCommandInProgress ? _responseActionYN : null;
+                get => YNCommandInProgress ? _ynResponseActionYn : null;
                 set
                 {
                     if (!YNCommandInProgress)
-                        _responseActionYN = value;
+                        _ynResponseActionYn = value;
                 }
             }
 
-            private static ResponseAction? _responseActionYN;
+            private static YNResponseAction? _ynResponseActionYn;
         
             //Locks changing the items
             public static bool YNCommandInProgress
@@ -57,17 +69,86 @@ namespace BradlBot.Commands
 
             private static bool? _yNCommandInProgress; 
         
-            public enum ResponseAction
+            public enum YNResponseAction
             {
                 Kick,
                 Ban,
                 Warn
             }
+
+            public static void YNRespondToAction()
+            {
+                switch (YnResponseActionYn)
+                {
+                        case YNResponseAction.Kick:
+                            ModCommands.KickConfirmedAsync(DiscordUsersToInteractWithYN);
+                }                
+            }
         
-            
+            */
         #endregion
         
         
         
+    }
+
+    public class YesNoResponse
+    {
+        public YesNoResponse(CommandContext ctx)
+        {
+            context = ctx;
+            ResponseStorage.ListOfYesNoResponses.Add(this);
+        }
+        
+        public CommandContext context { get; private set; }
+        public DiscordGuild guild => context.Guild;
+        
+        public static List<DiscordGuild> LockedGuilds = new List<DiscordGuild>();
+        
+        public static List<string> YNResponses = new List<string>(){"Y","N"};
+        
+        
+        public List<DiscordUser> DiscordUsersToInteractWithYN
+        {
+            get => _discordUsersToInteractWithYN;
+            set => _discordUsersToInteractWithYN = value;
+        }
+        private List<DiscordUser> _discordUsersToInteractWithYN;
+        
+
+        public DiscordUser UserToRespond
+        {
+            get => _userToRespond;
+            set => _userToRespond = value;
+        }
+
+        private DiscordUser _userToRespond;
+    
+        public  YNResponseAction? YnResponseActionYn
+        {
+            get => _ynResponseActionYn;
+            set => _ynResponseActionYn = value;
+        }
+
+        private YNResponseAction? _ynResponseActionYn; 
+    
+        public enum YNResponseAction
+        {
+            Kick,
+            Ban,
+            Warn
+        }
+
+        public async Task YNRespondToAction()
+        {
+            switch (YnResponseActionYn)
+            {
+                    case YNResponseAction.Kick:
+                        await ModCommands.KickConfirmedAsync(DiscordUsersToInteractWithYN, guild, Content,context);
+                        break;
+            }                
+        }
+        
+        public string Content { get; set; }
     }
 }
