@@ -1,0 +1,9 @@
+language: csharp
+solution: BradlBot.sln
+mono: none
+dotnet: 1.0.2
+dist: trusty
+install:
+ - dotnet restore
+script:
+ - dotnet msbuild /p:Configuration=Release
