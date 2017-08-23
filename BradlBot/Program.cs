@@ -6,6 +6,7 @@ using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
+using DSharpPlus.Interactivity;
 using Newtonsoft.Json;
 
 
@@ -17,6 +18,7 @@ namespace BradlBot
         
         public DiscordClient Client { get; set; }
         public CommandsNextModule Commands { get; set; }
+        static InteractivityModule Interactivity { get; set; }
         
         public static void Main(string[] args)
         {
@@ -97,7 +99,6 @@ namespace BradlBot
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
             this.Client.ClientError += this.Client_ClientError;
-            this.Client.MessageCreated += Checks.MessageCreated_Checks;
             
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
@@ -113,9 +114,12 @@ namespace BradlBot
             this.Commands.CommandExecuted += this.Command_CommandExecuted;
             this.Commands.CommandErrored += this.Command_CommandError;
                 
-            //Commands registration (none yet)
+            //Commands registration
             this.Commands.RegisterCommands<UserCommands>();
             this.Commands.RegisterCommands<ModCommands>();
+            
+            //Interactivity Setup
+            Interactivity = Client.UseInteractivity();
             
             //Connect and login
             await this.Client.ConnectAsync();
@@ -165,15 +169,17 @@ namespace BradlBot
             if (e.Exception is ChecksFailedException)
             {
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
-                        
-                //Do an embed
-                var embed = new DiscordEmbed()
-                {
-                    Title = "Access Denied",
-                    Description = $"{emoji} You do not have permission to execute this.",
-                    Color = 0xFF0000
-                };
-                await e.Context.RespondAsync("", embed: embed);
+                CommandsCommon.Respond(e.Context, "Access Denied", $"{emoji} You do not have permission to execute this.", 0xFF0000);
+            }
+            else if(e.Exception is ArgumentException)
+            {
+                //Arguments are wrong so tell them so
+                var emoji = DiscordEmoji.FromName(e.Context.Client, ":face_palm:");
+                CommandsCommon.Respond(e.Context,"Error",$"{emoji}Incorrect arguments; see '!help {e.Command?.Name ?? "<Command Name>"}'", 0xFF0000);
+            }
+            else
+            {
+                CommandsCommon.RespondWithError(e.Context, $"{e.Exception.GetType()} - {e.Exception.Message}");
             }
         }
     }
