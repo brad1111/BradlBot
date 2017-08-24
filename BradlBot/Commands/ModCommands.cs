@@ -81,5 +81,94 @@ namespace BradlBot.Commands
                         break;
             }
         }
+        
+        //Has Control over other users, so may need this tool
+        [RequirePermissions(Permissions.ManageMessages)]
+        [Command("user")]
+        [Description("Gets user information about the person")]
+        public async Task UserInfo(CommandContext ctx,
+            [Description("Discord member to get information from")] DiscordMember memberToCheck)
+        {
+            //Show typing
+            await ctx.TriggerTypingAsync();
+
+            string title =
+                $"{memberToCheck.Mention}: {memberToCheck.Username}#{memberToCheck.Discriminator} aka {memberToCheck.Nickname ?? "<No Nickname>"}";
+            
+            //Date created
+            string accountCreatedDate = $"Created: {memberToCheck.CreationDate.ToUniversalTime().DateTime} UTC";
+            string accountJoinedDate = $"Joined: {memberToCheck.JoinedAt.ToUniversalTime().DateTime} UTC";
+            
+            //Roles setup
+            var listOfRoles = memberToCheck.Roles.ToList();
+            string rolesTxt = null;
+            foreach (var role in listOfRoles)
+            {
+                rolesTxt += $"    {role.Name}\n";
+            }
+            
+            //Emoji setup
+            var checkMark = DiscordEmoji.FromName(ctx.Client ,":white_check_mark:");
+            var crossMark = DiscordEmoji.FromName(ctx.Client, ":negative_squared_cross_mark:");
+            var questionMark = DiscordEmoji.FromName(ctx.Client, ":grey_question:");
+
+            //Security Settings setup
+            string securitySettings = null;
+            //    Verified
+            securitySettings += "    Verified ";
+            switch (memberToCheck.Verified)
+            {
+                    case true:
+                        securitySettings += $"{checkMark}\n";
+                        break;
+                    case false:
+                        securitySettings += $"{crossMark}\n";
+                        break;
+                    default:
+                        securitySettings += $"{questionMark}\n";
+                        break;
+            }
+
+            //    2fa
+            securitySettings += "    2fa ";
+            switch (memberToCheck.MfaEnabled)
+            {
+                    case true:
+                        securitySettings += $"{checkMark}\n";
+                        break;
+                    case false:
+                        securitySettings += $"{crossMark}\n";
+                        break;
+                    default:
+                        securitySettings += $"{questionMark}\n";
+                        break;
+            }
+
+            string botWarning = memberToCheck.IsBot ? "Warning user is a bot.\n" : null;
+
+            
+            string message = $"Unique ID: {memberToCheck.Id}\n";
+            message += $"{accountCreatedDate}\n";
+            message += $"{accountJoinedDate}\n";
+//            message += "Security: \n";
+//            message += $"{securitySettings}";
+            message += $"{botWarning}";
+            message += "Avatar:\n";
+            
+            //Image
+            DiscordEmbedImage image = new DiscordEmbedImage()
+            {
+                Url = memberToCheck.AvatarUrl
+            };
+
+            DiscordEmbed embedMessage = new DiscordEmbed()
+            {
+                Image = image,
+                Title = title,
+                Description = message,
+                Color = 0x0000FF
+            };
+            await ctx.RespondAsync(null,embed:embedMessage);
+        }
     }
 }
