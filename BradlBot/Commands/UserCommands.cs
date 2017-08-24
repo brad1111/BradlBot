@@ -66,7 +66,7 @@ namespace BradlBot.Commands
             output += $"•Targets: {targetFw.ToList()[0].FrameworkName}\n";
             
             //Get os
-            output += $"•OS: {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}";
+            output += $"•OS: {RuntimeInformation.OSDescription} {RuntimeInformation.OSArchitecture}\n";
             
             //output github
             output += "•Github Repo: https://www.github.com/thebradad1111/bradlbot";
