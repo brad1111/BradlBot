@@ -6,4 +6,4 @@ dist: trusty
 install:
  - dotnet restore
 script:
- - dotnet msbuild /p:Configuration=Release
+ - dotnet build -c Release
