@@ -10,4 +10,7 @@
       <HintPath>C:\Users\bradl\.nuget\packages\dsharpplus.commandsnext\2.5.4\lib\netstandard1.3\DSharpPlus.CommandsNext.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NETStandard.Library" Version="2.0.0" />
+  </ItemGroup>
 </Project>
