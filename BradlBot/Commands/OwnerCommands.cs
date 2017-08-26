@@ -35,5 +35,18 @@ namespace BradlBot.Commands
                         throw new ArgumentException($"Only y or n accepted after {ctx.Command.Name}");
             }
         }
+
+        [RequireOwner]
+        [Command("restart")]
+        [Aliases("reboot")]
+        [Description("Restarts the bot")]
+        public async Task Restart(CommandContext ctx)
+        {
+            await ctx.TriggerTypingAsync();
+            CommandsCommon.RespondWithWarning(ctx,"Restarting");
+            await ctx.Client.DisconnectAsync();
+            await Task.Delay(1000);
+            Program.Main(null);
+        }
     }
 }
