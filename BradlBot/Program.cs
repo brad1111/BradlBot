@@ -117,6 +117,7 @@ namespace BradlBot
             //Commands registration
             this.Commands.RegisterCommands<UserCommands>();
             this.Commands.RegisterCommands<ModCommands>();
+            this.Commands.RegisterCommands<OwnerCommands>();
             
             //Interactivity Setup
             Interactivity = Client.UseInteractivity();
