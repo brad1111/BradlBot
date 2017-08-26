@@ -170,5 +170,73 @@ namespace BradlBot.Commands
             };
             await ctx.RespondAsync(null,embed:embedMessage);
         }
+
+        [RequirePermissions(Permissions.ManageMessages)]
+        [Command("delete")]
+        [Description("Deletes previous messages")]
+        [Aliases("rm", "purge")]
+        public async Task DeleteMessages(CommandContext ctx,[Description("Number of previous messages to delete [Max 100]")] int numberToDelete)
+        {
+            var messagesEnum = await ctx.Channel.GetMessagesAsync();
+            var messagesList = messagesEnum.ToList();
+            int maximum = messagesList.Count - 1;
+            
+            //Puts limit on maxmimum allowed (100)
+            int limitedNumberToDelete = numberToDelete > 100 ? 100 : numberToDelete;
+            int actualNumberToDelete = Math.Min(limitedNumberToDelete, maximum) + 1;
+
+            int noDeleted = 0;
+            int noFailed = 0;
+            for (int i = 1; i < actualNumberToDelete; i++)
+            {
+                try
+                {
+                    await messagesList[i].DeleteAsync();
+                    noDeleted++;
+                }
+                catch (Exception e)
+                {
+                    noFailed++;
+                    Console.WriteLine($"Error: {noFailed + noDeleted} failed. {e.GetType()} - {e.Message}");
+                    if (e is RateLimitException)
+                    {
+                        //Try to solve rate limiting
+                        var keys = (e as RateLimitException).WebResponse.Headers.Keys;
+                        var keysList = keys.ToList();
+                        int rateTimeoutNumber = keysList.FindIndex(str => str == "Retry-After");
+                        var values = (e as RateLimitException).WebResponse.Headers.Values;
+                        var valuesList = values.ToList();
+                        string timeoutTicks = valuesList[rateTimeoutNumber];
+                        Console.WriteLine(timeoutTicks);
+                        int timeoutTicksInt;
+                        if (int.TryParse(timeoutTicks, out timeoutTicksInt))
+                        {
+                            await Task.Delay(timeoutTicksInt + 1);
+                        }
+                        else
+                        {
+                            await Task.Delay(500);
+                        }
+                        
+                    }
+                }
+                finally
+                {
+                    //Slow down to not get rate limited if over 3
+                    if (actualNumberToDelete - 1 >= 4)
+                        await Task.Delay(1000);
+                }
+            }
+            switch (noFailed)
+            {
+                case 0:
+                    CommandsCommon.RespondWithSuccess(ctx, $"{noDeleted} deleted successfully.");
+                    break;
+                default:
+                    CommandsCommon.RespondWithWarning(ctx, $"{noDeleted} deleted successfully, but {noFailed} failed.");
+                    break;
+            }
+        }
+        
     }
 }
