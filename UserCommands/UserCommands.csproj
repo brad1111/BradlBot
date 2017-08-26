@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard1.4</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="DSharpPlus, Version=2.5.4.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Users\bradl\.nuget\packages\dsharpplus\2.5.4\lib\netstandard1.3\DSharpPlus.dll</HintPath>
+    </Reference>
+    <Reference Include="DSharpPlus.CommandsNext, Version=2.5.4.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>C:\Users\bradl\.nuget\packages\dsharpplus.commandsnext\2.5.4\lib\netstandard1.3\DSharpPlus.CommandsNext.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Reflection" Version="4.3.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AddonsBackend\AddonsBackend.csproj">
+      <Project>{723E1F55-4193-4673-9564-61E90CDF9619}</Project>
+      <Name>AddonsBackend</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

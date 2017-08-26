@@ -4,15 +4,23 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Tasks;
+using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 
-namespace BradlBot.Commands
+namespace UserCommands
 {
     public class UserCommands
     {
-
+        public UserCommands(CommandsNextModule commands)
+        {
+            //Register this
+            commands.RegisterCommands<UserCommands>();
+        }
+        
+        
+        
         [Command("ping")]
         [Description("Reply's if the bot is on")]
         [Aliases("on", "up", "online")]
@@ -38,7 +46,7 @@ namespace BradlBot.Commands
             var clock = DiscordEmoji.FromName(ctx.Client, ":alarm_clock:");
 
             //Get date started
-            var timeSinceStart = DateTime.UtcNow.Subtract(Program.TimeStarted);
+            var timeSinceStart = DateTime.UtcNow.Subtract(CommandsCommon.TimeStarted);
 
             await ctx.RespondAsync(
                 $"{clock} The bot has been up for {timeSinceStart.Days} Day[s], {timeSinceStart.Hours % 24} Hour[s], {timeSinceStart.Minutes % (24 * 60)} Minute[s], {timeSinceStart.Seconds % (24 * 60 * 60)} Second[s]");
@@ -50,13 +58,13 @@ namespace BradlBot.Commands
         public async Task Info(CommandContext ctx)
         {
             await ctx.TriggerTypingAsync();
-            Assembly thisAssembly = Assembly.GetEntryAssembly();
+            Assembly thisAssembly = CommandsCommon.FrontEndAssembly;
             string title = $"{thisAssembly.GetName().Name} - Version {thisAssembly.GetName().Version}";
             string output = String.Empty;
             
             //find dependancies and add to string
             output += "•Dependencies:\n";
-            foreach (var assemblyReference in thisAssembly.GetReferencedAssemblies())
+            foreach (var assemblyReference in CommandsCommon.ReferencedAssemblies)
             {
                 output += $"    ‣{assemblyReference.Name} - Version {assemblyReference.Version}\n";
             }
