@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Metadata;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 using BradlBot.Commands;
@@ -13,9 +18,7 @@ using Newtonsoft.Json;
 namespace BradlBot
 {
     class Program
-    {
-        public static DateTime TimeStarted = DateTime.Now;
-        
+    {    
         public DiscordClient Client { get; set; }
         public CommandsNextModule Commands { get; set; }
         static InteractivityModule Interactivity { get; set; }
@@ -113,9 +116,85 @@ namespace BradlBot
             //Commands Events
             this.Commands.CommandExecuted += this.Command_CommandExecuted;
             this.Commands.CommandErrored += this.Command_CommandError;
+
+            //Get components
+            string directory = Directory.GetCurrentDirectory();
+            string addonDirectory = directory + "/addons";
+            if (Directory.Exists(addonDirectory))
+            {
+                //Check for addons
+                string[] files = Directory.GetFiles(addonDirectory);
+                List<Assembly> potentialAddons = new List<Assembly>();
+
+                foreach (var file in files)
+                {
+                    //Checks to see if they are dlls
+                    if (file.EndsWith(".dll".ToLower()))
+                    {
+                        try
+                        {
+                            //get assemblyname of dll
+                            var asm = AssemblyLoadContext.Default.LoadFromAssemblyPath(file);
+                            var typesWithin = asm.GetTypes();
+
+                            var startupTypes = typesWithin.Where(type =>
+                            {
+                                var attributes = type.GetTypeInfo().GetCustomAttributes();
+                                return attributes.Contains(new AddonAttribute());
+                            });
+
+                            foreach (var startupType in startupTypes)
+                            {
+                                var startupTypeObject = Activator.CreateInstance(startupType, Commands);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Error could not load: {file}\n" +
+                                              $"Error: {e.GetType()} - {e.Message}");
+                        #if DEBUG
+                            throw;
+                        #endif
+                        }
+                    }
+                }
                 
+                
+            }
+            else
+            {
+                //Create folder
+                Directory.CreateDirectory(addonDirectory);
+                string readmePath = addonDirectory + "/addons.txt";
+                string developersPath = addonDirectory + "/developers.txt";
+                Assembly thisAssembly = Assembly.GetEntryAssembly();
+
+                string header = "NOTE THIS IS AN AUTOMATICALLY GENERATED DOCUMENT.\n" +
+                                $"This was created by {thisAssembly.GetName().Name} - Version {thisAssembly.GetName().Version}\n" +
+                                $"Github: https://www.github.com/thebradad1111/bradlbot\n" +
+                                "\n";
+                string readmeContents = header +
+                                        "The addons within this folder will be automatically detected.\n" +
+                                        "Addons should end with '.dll' or be of type 'Application Extension' in Windows\n" +
+                                        "Addon authors are solely responsible for any damage caused by their addons and are solely responsible for support.\n" +
+                                        "DLL's have the capability of being malicious so only download addons from people you trust.\n" +
+                                        "Addons that do not work are not the responsibility of the author of BradlBot, please contact the addon author if possible";
+
+                string developerContents = header +
+                                           "Developers: you are solely responsible for any damaged caused by your addon and are solely responsible for support and maintainence.\n" +
+                                           "To register your DLL with BradlBot, you will need to add the attribute [Addon] to one or more classes (you decide, requires reference to AddonsBackend)\n" +
+                                           "and then create a constructor which only accepts 'CommandsNextModule' as a parameter (requires reference to DSharpPlus.CommandsNext),\n" +
+                                           "in the constructor make sure you register the classes you use: 'parametername.RegisterCommands<ClassName>().\n" +
+                                           "Then make sure you place the dll file from /bin/debug/{yourproject.dll} or /bin/release/{yourproject.dll} into this addons folder.\n" +
+                                           "See https://www.github.com/thebradad1111/bradlbot for more details and examples.";
+                
+                var readmeStreamWriter = File.CreateText(readmePath);
+                await readmeStreamWriter.WriteAsync(readmeContents);
+                var developerStreamWriter = File.CreateText(developersPath);
+                await developerStreamWriter.WriteAsync(developerContents);
+            }
+            
             //Commands registration
-            this.Commands.RegisterCommands<UserCommands>();
             this.Commands.RegisterCommands<ModCommands>();
             this.Commands.RegisterCommands<OwnerCommands>();
             
@@ -126,7 +205,11 @@ namespace BradlBot
             await this.Client.ConnectAsync();
             
             //Save time started
-            TimeStarted = DateTime.UtcNow;
+            CommandsCommon.TimeStarted = DateTime.UtcNow;
+            
+            //Save the assemblys
+            CommandsCommon.FrontEndAssembly = Assembly.GetEntryAssembly();
+            CommandsCommon.ReferencedAssemblies = CommandsCommon.FrontEndAssembly.GetReferencedAssemblies().ToList();
             
             //Prevent premature quitting
             await Task.Delay(-1);

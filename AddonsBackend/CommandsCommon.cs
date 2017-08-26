@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 
@@ -6,6 +8,10 @@ namespace BradlBot.Commands
 {
     public class CommandsCommon
     {
+        public static DateTime TimeStarted { get; set; }
+        public static Assembly FrontEndAssembly { get; set; } 
+        public static List<AssemblyName> ReferencedAssemblies { get; set; }
+        
         public enum RespondType
         {
             Error,
