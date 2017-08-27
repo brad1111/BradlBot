@@ -1,0 +1,11 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard1.4</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AddonsBackend\AddonsBackend.csproj">
+      <Project>{723E1F55-4193-4673-9564-61E90CDF9619}</Project>
+      <Name>AddonsBackend</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

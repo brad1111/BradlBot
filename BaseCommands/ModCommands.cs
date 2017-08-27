@@ -1,12 +1,13 @@
-﻿﻿using System;
+﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
- using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity;
 
-namespace BradlBot.Commands
+namespace BaseCommands
 {
     public class ModCommands
     {   

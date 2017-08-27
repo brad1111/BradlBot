@@ -152,9 +152,6 @@ namespace BradlBot
                         {
                             Console.WriteLine($"Error could not load: {file}\n" +
                                               $"Error: {e.GetType()} - {e.Message}");
-                        #if DEBUG
-                            throw;
-                        #endif
                         }
                     }
                 }
@@ -195,7 +192,6 @@ namespace BradlBot
             }
             
             //Commands registration
-            this.Commands.RegisterCommands<ModCommands>();
             this.Commands.RegisterCommands<OwnerCommands>();
             
             //Interactivity Setup
