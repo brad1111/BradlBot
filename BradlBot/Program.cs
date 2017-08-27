@@ -7,7 +7,8 @@ using System.Reflection.Metadata;
 using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
-using BradlBot.Commands;
+ using AddonsBackend;
+ using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
@@ -20,7 +21,11 @@ namespace BradlBot
     class Program
     {    
         public DiscordClient Client { get; set; }
-        public CommandsNextModule Commands { get; set; }
+        public CommandsNextModule Commands
+        {
+            get => CommandsCommon.Commands;
+            set => CommandsCommon.Commands = value;
+        }
         static InteractivityModule Interactivity { get; set; }
         
         public static void Main(string[] args)
@@ -138,14 +143,15 @@ namespace BradlBot
                             var typesWithin = asm.GetTypes();
 
                             var startupTypes = typesWithin.Where(type =>
-                            {
-                                var attributes = type.GetTypeInfo().GetCustomAttributes();
-                                return attributes.Contains(new AddonAttribute());
-                            });
+                                type.GetTypeInfo().GetInterfaces().Contains(typeof(IStartup)));
 
+                            
                             foreach (var startupType in startupTypes)
                             {
-                                var startupTypeObject = Activator.CreateInstance(startupType, Commands);
+                                object startupTypeObject =  Activator.CreateInstance(startupType);
+                                IStartup startupTypeInterf = startupTypeObject as IStartup;
+                                startupTypeInterf?.StartupLogic();
+                                Console.WriteLine($"Dynamically Loaded: {startupType.FullName}");
                             }
                         }
                         catch (Exception e)
@@ -155,7 +161,6 @@ namespace BradlBot
                         }
                     }
                 }
-                
                 
             }
             else
@@ -179,10 +184,11 @@ namespace BradlBot
 
                 string developerContents = header +
                                            "Developers: you are solely responsible for any damaged caused by your addon and are solely responsible for support and maintainence.\n" +
-                                           "To register your DLL with BradlBot, you will need to add the attribute [Addon] to one or more classes (you decide, requires reference to AddonsBackend)\n" +
-                                           "and then create a constructor which only accepts 'CommandsNextModule' as a parameter (requires reference to DSharpPlus.CommandsNext),\n" +
-                                           "in the constructor make sure you register the classes you use: 'parametername.RegisterCommands<ClassName>().\n" +
-                                           "Then make sure you place the dll file from /bin/debug/{yourproject.dll} or /bin/release/{yourproject.dll} into this addons folder.\n" +
+                                           "To register your DLL with BradlBot, you will need to implement the interface 'IStartup' to a startup class (you can call this class what you want\n" +
+                                           "this requires an AddonsBackend reference in the project, this must not contain your commands or a constructor).\n"+
+                                           "In the void required by the interface make sure you write 'CommandsCommon.Commands.RegisterCommands<NameOfClassWithYourCommandsIn>();' to add these commands.\n" +
+                                           "NOTE: Your class with your commands in must also not have a constructor otherwise it will crash on startup.\n" + 
+                                           "Then make sure you place the dll file from /bin/debug/{yourproject.dll} or /bin/release/{yourproject.dll} into this addons folder after compiling.\n" +
                                            "See https://www.github.com/thebradad1111/bradlbot for more details and examples.";
                 
                 var readmeStreamWriter = File.CreateText(readmePath);

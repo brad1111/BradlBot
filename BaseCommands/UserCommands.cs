@@ -12,14 +12,7 @@ using DSharpPlus.CommandsNext.Attributes;
 namespace BaseCommands
 {
     public class UserCommands
-    {
-        public UserCommands(CommandsNextModule commands)
-        {
-            //Register this
-            commands.RegisterCommands<UserCommands>();
-        }
-        
-        
+    {      
         
         [Command("ping")]
         [Description("Reply's if the bot is on")]

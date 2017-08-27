@@ -8,4 +8,8 @@
       <Name>AddonsBackend</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DSharpPlus.CommandsNext" Version="2.5.4" />
+    <PackageReference Include="DSharpPlus.Interactivity" Version="2.5.4" />
+  </ItemGroup>
 </Project>

@@ -1,17 +1,19 @@
 ﻿using System;
+using System.Dynamic;
 using System.Runtime.CompilerServices;
+using AddonsBackend;
 using DSharpPlus.CommandsNext;
 using BradlBot;
+using BradlBot.Commands;
 
 namespace BaseCommands
 {
-    [Addon]
-    public class Startup
+    public class Startup : IStartup
     {
-        public Startup(CommandsNextModule Commands)
+        public void StartupLogic()
         {
-            Commands.RegisterCommands<UserCommands>();
-            Commands.RegisterCommands<ModCommands>();
+            CommandsCommon.Commands.RegisterCommands<UserCommands>();
+            CommandsCommon.Commands.RegisterCommands<ModCommands>();
         }
     }
 }
