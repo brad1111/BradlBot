@@ -7,3 +7,7 @@ install:
  - dotnet restore
 script:
  - dotnet build -c Release
+ - cd BradlBot
+ - dotnet run -c Release -addonsfolder
+ - cd ..
+ - cp BaseCommands/bin/Release/netstandard1.4/BaseCommands.dll BradlBot/addons
