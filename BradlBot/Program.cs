@@ -19,17 +19,38 @@ using Newtonsoft.Json;
 namespace BradlBot
 {
     class Program
-    {    
+    {
         public DiscordClient Client { get; set; }
+
         public CommandsNextModule Commands
         {
             get => CommandsCommon.Commands;
             set => CommandsCommon.Commands = value;
         }
+
         static InteractivityModule Interactivity { get; set; }
-        
+
+        private static string AddonDirectory
+        {
+            get
+            {
+                string directory = Directory.GetCurrentDirectory();
+                return (directory + "/addons");
+            }
+        }
+
+
+
         public static void Main(string[] args)
         {
+            //Pre-setup for AppVeyor/Travis CI
+            if (args.Contains("-AddonsFolder".ToLower().Trim()))
+            {
+                SetupAddonsFolder().GetAwaiter().GetResult();
+                Console.WriteLine("Addons folder setup successfully.");
+                return;
+            }
+
             Console.WriteLine("BradlBot Starting");
             
             //Setup config 
@@ -123,12 +144,10 @@ namespace BradlBot
             this.Commands.CommandErrored += this.Command_CommandError;
 
             //Get components
-            string directory = Directory.GetCurrentDirectory();
-            string addonDirectory = directory + "/addons";
-            if (Directory.Exists(addonDirectory))
+            if (Directory.Exists(AddonDirectory))
             {
                 //Check for addons
-                string[] files = Directory.GetFiles(addonDirectory);
+                string[] files = Directory.GetFiles(AddonDirectory);
                 List<Assembly> potentialAddons = new List<Assembly>();
 
                 foreach (var file in files)
@@ -165,36 +184,7 @@ namespace BradlBot
             }
             else
             {
-                //Create folder
-                Directory.CreateDirectory(addonDirectory);
-                string readmePath = addonDirectory + "/addons.txt";
-                string developersPath = addonDirectory + "/developers.txt";
-                Assembly thisAssembly = Assembly.GetEntryAssembly();
-
-                string header = "NOTE THIS IS AN AUTOMATICALLY GENERATED DOCUMENT.\n" +
-                                $"This was created by {thisAssembly.GetName().Name} - Version {thisAssembly.GetName().Version}\n" +
-                                $"Github: https://www.github.com/thebradad1111/bradlbot\n" +
-                                "\n";
-                string readmeContents = header +
-                                        "The addons within this folder will be automatically detected.\n" +
-                                        "Addons should end with '.dll' or be of type 'Application Extension' in Windows\n" +
-                                        "Addon authors are solely responsible for any damage caused by their addons and are solely responsible for support.\n" +
-                                        "DLL's have the capability of being malicious so only download addons from people you trust.\n" +
-                                        "Addons that do not work are not the responsibility of the author of BradlBot, please contact the addon author if possible";
-
-                string developerContents = header +
-                                           "Developers: you are solely responsible for any damaged caused by your addon and are solely responsible for support and maintainence.\n" +
-                                           "To register your DLL with BradlBot, you will need to implement the interface 'IStartup' to a startup class (you can call this class what you want\n" +
-                                           "this requires an AddonsBackend reference in the project, this must not contain your commands or a constructor).\n"+
-                                           "In the void required by the interface make sure you write 'CommandsCommon.Commands.RegisterCommands<NameOfClassWithYourCommandsIn>();' to add these commands.\n" +
-                                           "NOTE: Your class with your commands in must also not have a constructor otherwise it will crash on startup.\n" + 
-                                           "Then make sure you place the dll file from /bin/debug/{yourproject.dll} or /bin/release/{yourproject.dll} into this addons folder after compiling.\n" +
-                                           "See https://www.github.com/thebradad1111/bradlbot for more details and examples.";
-                
-                var readmeStreamWriter = File.CreateText(readmePath);
-                await readmeStreamWriter.WriteAsync(readmeContents);
-                var developerStreamWriter = File.CreateText(developersPath);
-                await developerStreamWriter.WriteAsync(developerContents);
+                await SetupAddonsFolder();
             }
             
             //Commands registration
@@ -215,6 +205,42 @@ namespace BradlBot
             
             //Prevent premature quitting
             await Task.Delay(-1);
+        }
+
+        private static async Task SetupAddonsFolder()
+        {
+//Create folder
+            Directory.CreateDirectory(AddonDirectory);
+            string readmePath = AddonDirectory + "/addons.txt";
+            string developersPath = AddonDirectory + "/developers.txt";
+            Assembly thisAssembly = Assembly.GetEntryAssembly();
+
+            string header = "NOTE THIS IS AN AUTOMATICALLY GENERATED DOCUMENT.\n" +
+                            $"This was created by {thisAssembly.GetName().Name} - Version {thisAssembly.GetName().Version}\n" +
+                            $"Github: https://www.github.com/thebradad1111/bradlbot\n" +
+                            "\n";
+            string readmeContents = header +
+                                    "The addons within this folder will be automatically detected.\n" +
+                                    "Addons should end with '.dll' or be of type 'Application Extension' in Windows\n" +
+                                    "Addon authors are solely responsible for any damage caused by their addons and are solely responsible for support.\n" +
+                                    "DLL's have the capability of being malicious so only download addons from people you trust.\n" +
+                                    "Addons that do not work are not the responsibility of the author of BradlBot, please contact the addon author if possible";
+
+            string developerContents = header +
+                                       "Developers: you are solely responsible for any damaged caused by your addon and are solely responsible for support and maintainence.\n" +
+                                       "To register your DLL with BradlBot, you will need to implement the interface 'IStartup' to a startup class (you can call this class what you want\n" +
+                                       "this requires an AddonsBackend reference in the project, this must not contain your commands or a constructor).\n" +
+                                       "In the void required by the interface make sure you write 'CommandsCommon.Commands.RegisterCommands<NameOfClassWithYourCommandsIn>();' to add these commands.\n" +
+                                       "NOTE: Your class with your commands in must also not have a constructor otherwise it will crash on startup.\n" +
+                                       "Then make sure you place the dll file from /bin/debug/{yourproject.dll} or /bin/release/{yourproject.dll} into this addons folder after compiling.\n" +
+                                       "See https://www.github.com/thebradad1111/bradlbot for more details and examples.";
+
+            var readmeStreamWriter = File.CreateText(readmePath);
+            await readmeStreamWriter.WriteAsync(readmeContents);
+            await readmeStreamWriter.FlushAsync();
+            var developerStreamWriter = File.CreateText(developersPath);
+            await developerStreamWriter.WriteAsync(developerContents);
+            await developerStreamWriter.FlushAsync();
         }
 
         private Task Client_Ready(ReadyEventArgs e)
