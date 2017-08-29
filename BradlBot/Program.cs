@@ -4,7 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Runtime.Loader;
+ using System.Runtime.InteropServices.ComTypes;
+ using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
  using AddonsBackend;
@@ -39,7 +40,7 @@ namespace BradlBot
             }
         }
 
-
+        private static List<Message> _storedMessages = new List<Message>();
 
         public static void Main(string[] args)
         {
@@ -128,7 +129,62 @@ namespace BradlBot
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
             this.Client.ClientError += this.Client_ClientError;
+            this.Client.MessageCreated += async args =>
+            {
+                _storedMessages.Add(Message.GetFromDiscordMessage(args.Message));
+            };
+            this.Client.MessageDelete += async args =>
+            {
+                //Checks to see if list has anything in it before checking
+                if (_storedMessages.Count == 0)
+                {
+                    Console.WriteLine(
+                        "Could not save a message due nothing being stored right now, please do not turn off the bot often.");
+                    return;
+                }
+
+                //Checks to see if ID is stored anywhere
+                if (_storedMessages.All(message => message.ID != args.Message.Id))
+                {
+                    Console.WriteLine("Could not save a message due to it not being stored.");
+                    return;
+                }
+                
+                if(_storedMessages.All(message => message.Channel.Name.ToLower().Trim() == "logs"))
+                {
+                    //Simply return as we don't log log deletion
+                    return;
+                }
+                var correctStoreMessage = _storedMessages.FindLast(message => message.ID == args.Message.Id);
+
+                //Embedded message
+                DiscordEmoji warningEmoji = DiscordEmoji.FromName(args.Client, ":warning:");
+                DiscordEmbedFooter footer = new DiscordEmbedFooter()
+                {
+                    Text = $"Message was deleted at {DateTime.UtcNow} UTC"
+                };
+                DiscordEmbedAuthor author = new DiscordEmbedAuthor()
+                {
+                    Name = correctStoreMessage.Author.ToString()
+                };
+                DiscordEmbed embeddedMessage = new DiscordEmbed()
+                {
+                    Title = $"{warningEmoji}Warning",
+                    Description = $"{correctStoreMessage.Content}",
+                    Footer = footer,
+                    Author = author
+                };
+
+                //Logs channel
+                var logsChannel =
+                    args.Guild.Channels.First(channels => channels.Name.ToLower().Trim() == "logs");
+                await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
+            };
             
+            this.Client.MessageUpdate += async args => 
+            {
+                
+            };
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
             {
