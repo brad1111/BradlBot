@@ -144,17 +144,18 @@ namespace BradlBot
                 }
 
                 //Checks to see if ID is stored anywhere
-                if (_storedMessages.All(message => message.ID != args.Message.Id))
+                if (!_storedMessages.All(message => message.ID == args.Message.Id))
                 {
                     Console.WriteLine("Could not save a message due to it not being stored.");
                     return;
                 }
                 
-                if(_storedMessages.All(message => message.Channel.Name.ToLower().Trim() == "logs"))
+                if(_storedMessages.All(message =>  message.ID == args.Message.Id && message.Channel.Name.ToLower().Trim() == "logs"))
                 {
                     //Simply return as we don't log log deletion
                     return;
                 }
+                //Find last in case the message was changed
                 var correctStoreMessage = _storedMessages.FindLast(message => message.ID == args.Message.Id);
 
                 //Embedded message
@@ -172,7 +173,8 @@ namespace BradlBot
                     Title = $"{warningEmoji}Warning",
                     Description = $"{correctStoreMessage.Content}",
                     Footer = footer,
-                    Author = author
+                    Author = author,
+                    Color = 0xFFFF00
                 };
 
                 //Logs channel
@@ -181,9 +183,48 @@ namespace BradlBot
                 await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
             };
             
-            this.Client.MessageUpdate += async args => 
+            this.Client.MessageUpdate += async args =>
             {
+                //Check to see if list has anything in it before checking
+                if (_storedMessages.Count == 0)
+                {
+                    Console.WriteLine("Could not save a changed message as no messages have been saved.");
+                    return;
+                }
+                //Check to see if the ID is already there to show update
+                if (!_storedMessages.Any(message => message.ID == args.Message.Id))
+                {
+                    Console.WriteLine("Could not save a changed message as it was not saved.");
+                    return;
+                }
+                //Check to see if the log was modified (don't log the logs)
+                if(args.Channel.Name.ToLower().Trim() == "logs")
+                    return;
                 
+                //Find correct message (has to be last in case it's been edited before)
+                var correctStoredMessage = _storedMessages.FindLast(message => message.ID == args.Message.Id);
+                
+                
+                //Setup embed
+                DiscordEmoji warningEmoji = DiscordEmoji.FromName(args.Client, ":warning:");
+                DiscordEmbedFooter footer = new DiscordEmbedFooter()
+                {
+                    Text = $"Message was changed at {DateTime.UtcNow} UTC"
+                };
+                DiscordEmbed embeddedMessage = new DiscordEmbed()
+                {
+                    Title = $"{warningEmoji}Warning",
+                    Description = $"{correctStoredMessage.Content}\n" +
+                                  "Was changed to:\n" +
+                                  $"{args.Message.Content}",
+                    Footer = footer,
+                    Author = new DiscordEmbedAuthor(){ Name = args.Author.ToString()},
+                    Color = 0xFFFF00
+                };
+                
+                //Find logs channel
+                var logsChannel = args.Guild.Channels.First(channel => channel.Name.ToLower().Trim() == "logs");
+                await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
             };
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
