@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
+using DSharpPlus.Entities;
 
 namespace BradlBot.Commands
 {
@@ -39,24 +40,24 @@ namespace BradlBot.Commands
         public static void RespondWithError(CommandContext ctx, string Error)
         {
             DiscordEmoji stopEmoji = DiscordEmoji.FromName(ctx.Client,":no_entry:");
-            Respond(ctx,"Error",$"{stopEmoji}{Error}",0xFF0000);
+            Respond(ctx, "Error", $"{stopEmoji}{Error}", new DiscordColor(0xFF0000));
         }
 
         public static void RespondWithWarning(CommandContext ctx, string warningMessage, string customTitle = null)
         {
             DiscordEmoji warningEmoji = DiscordEmoji.FromName(ctx.Client,":warning:");
-            Respond(ctx, customTitle ?? "Warning", $"{warningEmoji}{warningMessage}", 0xFFF000);
+            Respond(ctx, customTitle ?? "Warning", $"{warningEmoji}{warningMessage}", new DiscordColor(0xFFF000));
         }
 
         public static void RespondWithSuccess(CommandContext ctx, string successMessage)
         {
             DiscordEmoji successEmoji = DiscordEmoji.FromName(ctx.Client,":white_check_mark:");
-            Respond(ctx, "Success", $"{successEmoji}{successMessage}",0x00FF00);
+            Respond(ctx, "Success", $"{successEmoji}{successMessage}", new DiscordColor(0x00FF00));
         }
         
-        public static void Respond(CommandContext ctx, string title, string message, int color)
+        public static void Respond(CommandContext ctx, string title, string message, DiscordColor color)
         {
-            DiscordEmbed embed = new DiscordEmbed()
+            DiscordEmbed embed = new DiscordEmbedBuilder()
             {
                 Title = title,
                 Description = message,

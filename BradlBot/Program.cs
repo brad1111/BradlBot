@@ -13,7 +13,9 @@ using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
-using DSharpPlus.Interactivity;
+ using DSharpPlus.Entities;
+ using DSharpPlus.EventArgs;
+ using DSharpPlus.Interactivity;
 using Newtonsoft.Json;
 
 
@@ -91,7 +93,7 @@ namespace BradlBot
 
                 //Next load values from file
                 var cfgjson = JsonConvert.DeserializeObject<ConfigJson>(json);
-                var cfg = new DiscordConfig()
+                var cfg = new DiscordConfiguration()
                 {
                     Token = cfgjson.Token,
                     TokenType = TokenType.Bot,
@@ -119,7 +121,7 @@ namespace BradlBot
         }
         
         
-        public async Task SetupBotAsync(DiscordConfig cfg, ConfigJson cfgjson)
+        public async Task SetupBotAsync(DiscordConfiguration cfg, ConfigJson cfgjson)
         {
 
             //Create instance of client
@@ -128,12 +130,12 @@ namespace BradlBot
             //Create events
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
-            this.Client.ClientError += this.Client_ClientError;
+            this.Client.ClientErrored += this.Client_ClientError;
             this.Client.MessageCreated += async args =>
             {
                 _storedMessages.Add(Message.GetFromDiscordMessage(args.Message));
             };
-            this.Client.MessageDelete += async args =>
+            this.Client.MessageDeleted += async args =>
             {
                 //Checks to see if list has anything in it before checking
                 if (_storedMessages.Count == 0)
@@ -144,13 +146,13 @@ namespace BradlBot
                 }
 
                 //Checks to see if ID is stored anywhere
-                if (!_storedMessages.All(message => message.ID == args.Message.Id))
+                if (!_storedMessages.Any(message => message.ID == args.Message.Id))
                 {
                     Console.WriteLine("Could not save a message due to it not being stored.");
                     return;
                 }
                 
-                if(_storedMessages.All(message =>  message.ID == args.Message.Id && message.Channel.Name.ToLower().Trim() == "logs"))
+                if(_storedMessages.Any(message =>  message.ID == args.Message.Id && message.Channel.Name.ToLower().Trim() == "logs"))
                 {
                     //Simply return as we don't log log deletion
                     return;
@@ -159,31 +161,39 @@ namespace BradlBot
                 var correctStoreMessage = _storedMessages.FindLast(message => message.ID == args.Message.Id);
 
                 //Embedded message
-                DiscordEmoji warningEmoji = DiscordEmoji.FromName(args.Client, ":warning:");
-                DiscordEmbedFooter footer = new DiscordEmbedFooter()
+                DiscordEmoji warningEmoji = DiscordEmoji.FromName(this.Client, ":warning:");
+                DiscordEmbedBuilder.EmbedFooter footer = new DiscordEmbedBuilder.EmbedFooter()
                 {
                     Text = $"Message was deleted at {DateTime.UtcNow} UTC"
                 };
-                DiscordEmbedAuthor author = new DiscordEmbedAuthor()
+                DiscordEmbedBuilder.EmbedAuthor author = new DiscordEmbedBuilder.EmbedAuthor()
                 {
                     Name = correctStoreMessage.Author.ToString()
                 };
-                DiscordEmbed embeddedMessage = new DiscordEmbed()
+                DiscordEmbed embeddedMessage = new DiscordEmbedBuilder()
                 {
                     Title = $"{warningEmoji}Warning",
                     Description = $"{correctStoreMessage.Content}",
                     Footer = footer,
                     Author = author,
-                    Color = 0xFFFF00
+                    Color = new DiscordColor(0xFFFF00)
                 };
 
                 //Logs channel
-                var logsChannel =
-                    args.Guild.Channels.First(channels => channels.Name.ToLower().Trim() == "logs");
-                await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
+                
+                try
+                {
+                    var logsChannel =
+                        args.Guild.Channels.First(channels => channels.Name.ToLower().Trim() == "logs");
+                    await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
+                }
+                catch (InvalidOperationException)
+                {
+                    Console.WriteLine("Couldn't write to logs channel");
+                }
             };
             
-            this.Client.MessageUpdate += async args =>
+            this.Client.MessageUpdated += async args =>
             {
                 //Check to see if list has anything in it before checking
                 if (_storedMessages.Count == 0)
@@ -206,25 +216,32 @@ namespace BradlBot
                 
                 
                 //Setup embed
-                DiscordEmoji warningEmoji = DiscordEmoji.FromName(args.Client, ":warning:");
-                DiscordEmbedFooter footer = new DiscordEmbedFooter()
+                DiscordEmoji warningEmoji = DiscordEmoji.FromName(this.Client, ":warning:");
+                DiscordEmbedBuilder.EmbedFooter footer = new DiscordEmbedBuilder.EmbedFooter()
                 {
                     Text = $"Message was changed at {DateTime.UtcNow} UTC"
                 };
-                DiscordEmbed embeddedMessage = new DiscordEmbed()
+                DiscordEmbed embeddedMessage = new DiscordEmbedBuilder()
                 {
                     Title = $"{warningEmoji}Warning",
                     Description = $"{correctStoredMessage.Content}\n" +
                                   "Was changed to:\n" +
                                   $"{args.Message.Content}",
                     Footer = footer,
-                    Author = new DiscordEmbedAuthor(){ Name = args.Author.ToString()},
-                    Color = 0xFFFF00
+                    Author = new DiscordEmbedBuilder.EmbedAuthor(){ Name = args.Author.ToString()},
+                    Color = new DiscordColor(0xFFFF00)
                 };
                 
-                //Find logs channel
-                var logsChannel = args.Guild.Channels.First(channel => channel.Name.ToLower().Trim() == "logs");
-                await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
+                //Find logs channel and send to logs channel
+                try
+                {
+                    var logsChannel = args.Guild.Channels.First(channel => channel.Name.ToLower().Trim() == "logs");
+                    await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
+                }
+                catch (InvalidOperationException)
+                {
+                    Console.WriteLine("Could not find logs channel");
+                }
             };
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
@@ -288,7 +305,7 @@ namespace BradlBot
             this.Commands.RegisterCommands<OwnerCommands>();
             
             //Interactivity Setup
-            Interactivity = Client.UseInteractivity();
+            Interactivity = Client.UseInteractivity(new InteractivityConfiguration());
             
             //Connect and login
             await this.Client.ConnectAsync();
@@ -362,7 +379,7 @@ namespace BradlBot
             return Task.CompletedTask;
         }
 
-        private Task Command_CommandExecuted(CommandExecutedEventArgs e)
+        private Task Command_CommandExecuted(CommandExecutionEventArgs e)
         {
             e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot",
                 $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}' on {e.Context.Guild.Name} - {e.Context.Channel.Name}",
@@ -378,13 +395,13 @@ namespace BradlBot
             if (e.Exception is ChecksFailedException)
             {
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
-                CommandsCommon.Respond(e.Context, "Access Denied", $"{emoji} You do not have permission to execute this.", 0xFF0000);
+                CommandsCommon.Respond(e.Context, "Access Denied", $"{emoji} You do not have permission to execute this.", new DiscordColor(0xFF0000));
             }
             else if(e.Exception is ArgumentException)
             {
                 //Arguments are wrong so tell them so
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":face_palm:");
-                CommandsCommon.Respond(e.Context,"Error",$"{emoji}Incorrect arguments; see '!help {e.Command?.Name ?? "<Command Name>"}'", 0xFF0000);
+                CommandsCommon.Respond(e.Context,"Error",$"{emoji}Incorrect arguments; see '!help {e.Command?.Name ?? "<Command Name>"}'", new DiscordColor(0xFF0000));
             }
             else
             {

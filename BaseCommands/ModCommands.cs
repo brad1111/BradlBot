@@ -5,6 +5,8 @@ using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using DSharpPlus.Interactivity;
 
 namespace BaseCommands
@@ -22,7 +24,7 @@ namespace BaseCommands
             await ctx.TriggerTypingAsync();
 
             var boot = DiscordEmoji.FromName(ctx.Client, ":boot:");
-            DiscordEmbed embeddedKick = new DiscordEmbed()
+            DiscordEmbed embeddedKick = new DiscordEmbedBuilder()
             {
                 Title = "Kick?",
                 Description = $"{boot}Kick this user: {memberToKick.Mention}? [Y/N]"
@@ -41,7 +43,7 @@ namespace BaseCommands
             {
                 CommandsCommon.RespondWithError(ctx,$"Kick by {ctx.User.Mention} for {memberToKick.Mention} was cancelled due to timeout.");
             }
-            else if(msg.Content.ToLower().Trim() == "y")
+            else if(msg.Message.Content.ToLower().Trim() == "y")
             {
                 await ctx.Guild.RemoveMemberAsync(memberToKick);
                 CommandsCommon.RespondWithSuccess(ctx,
@@ -63,13 +65,13 @@ namespace BaseCommands
             await ctx.TriggerTypingAsync();
 
             var banHammer = DiscordEmoji.FromName(ctx.Client,":hammer:");
-            CommandsCommon.Respond(ctx,"Ban?",$"{banHammer}Ban this user: {discordMemberToBan.Mention}? [Y/N]", 0);
+            CommandsCommon.Respond(ctx,"Ban?",$"{banHammer}Ban this user: {discordMemberToBan.Mention}? [Y/N]", new DiscordColor(0));
 
             var interactivity = ctx.Client.GetInteractivityModule();
             var confirmMessage = await interactivity.WaitForMessageAsync(msg =>
                 msg.Author == ctx.Member &&
                 (msg.Content.ToLower().Trim() == "y" || msg.Content.ToLower().Trim() == "n"), TimeSpan.FromMinutes(1));
-            switch (confirmMessage?.Content.ToLower().Trim())
+            switch (confirmMessage?.Message.Content.ToLower().Trim())
             {
                     case null:
                         CommandsCommon.RespondWithError(ctx,$"Ban by {ctx.User.Mention} for {discordMemberToBan.Mention} was cancelled due to timeout.");
@@ -97,7 +99,7 @@ namespace BaseCommands
                 $"{memberToCheck.Mention}: {memberToCheck.Username}#{memberToCheck.Discriminator} aka {memberToCheck.Nickname ?? "<No Nickname>"}";
             
             //Date created
-            string accountCreatedDate = $"Created: {memberToCheck.CreationDate.ToUniversalTime().DateTime} UTC";
+            string accountCreatedDate = $"Created: {memberToCheck.CreationTimestamp.ToUniversalTime().DateTime} UTC";
             string accountJoinedDate = $"Joined: {memberToCheck.JoinedAt.ToUniversalTime().DateTime} UTC";
             
             //Roles setup
@@ -156,18 +158,12 @@ namespace BaseCommands
             message += $"{botWarning}";
             message += "Avatar:\n";
             
-            //Image
-            DiscordEmbedImage image = new DiscordEmbedImage()
+            DiscordEmbed embedMessage = new DiscordEmbedBuilder()
             {
-                Url = memberToCheck.AvatarUrl
-            };
-
-            DiscordEmbed embedMessage = new DiscordEmbed()
-            {
-                Image = image,
+                ImageUrl = memberToCheck.AvatarUrl,
                 Title = title,
                 Description = message,
-                Color = 0x0000FF
+                Color = new DiscordColor(0x0000FF)
             };
             await ctx.RespondAsync(null,embed:embedMessage);
         }

@@ -8,6 +8,7 @@ using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
+using DSharpPlus.Entities;
 
 namespace BaseCommands
 {
@@ -71,7 +72,7 @@ namespace BaseCommands
             
             //output github
             output += "•Github Repo: https://www.github.com/thebradad1111/bradlbot";
-            CommandsCommon.Respond(ctx,title,output,0x00FF00);
+            CommandsCommon.Respond(ctx,title,output, new DiscordColor(0x00FF00));
         }
     
     }
