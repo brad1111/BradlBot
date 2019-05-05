@@ -1,7 +1,7 @@
 language: csharp
 solution: BradlBot.sln
 mono: none
-dotnet: 1.0.3
+dotnet: 2.2
 dist: trusty
 install:
  - dotnet restore
@@ -10,4 +10,4 @@ script:
  - cd BradlBot
  - dotnet run -c Release -addonsfolder
  - cd ..
- - cp BaseCommands/bin/Release/netstandard1.4/BaseCommands.dll BradlBot/addons
+ - cp BaseCommands/bin/Release/netstandard2.0/BaseCommands.dll BradlBot/addons
