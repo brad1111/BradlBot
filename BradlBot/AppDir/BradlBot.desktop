@@ -1,0 +1,11 @@
+# Desktop Entry Specification: https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html
+[Desktop Entry]
+Type=Application
+Name=BradlBot
+Comment=A discord bot made in .NET Core
+Icon=BradlBot
+Exec=BradlBot
+Path=~
+Terminal=true
+Categories=Development;
+

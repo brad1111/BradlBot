@@ -300,3 +300,9 @@ __pycache__/
 
 #This projects json files
 **/config.json
+
+#The projects addons directory
+addons/
+
+#Any appimages
+*.AppImage
