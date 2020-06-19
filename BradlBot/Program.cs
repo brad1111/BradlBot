@@ -384,7 +384,7 @@ namespace BradlBot
         private Task Command_CommandExecuted(CommandExecutionEventArgs e)
         {
             e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot",
-                $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}' on {e.Context.Guild.Name} - {e.Context.Channel.Name}",
+                $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}' on {e.Context.Guild?.Name ?? e.Context.User.Username} - {e.Context.Channel.Name}",
                 DateTime.Now);
             return Task.CompletedTask;
         }
@@ -397,17 +397,17 @@ namespace BradlBot
             if (e.Exception is ChecksFailedException)
             {
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":no_entry:");
-                CommandsCommon.Respond(e.Context, "Access Denied", $"{emoji} You do not have permission to execute this.", new DiscordColor(0xFF0000));
+                await CommandsCommon.Respond(e.Context, "Access Denied", $"{emoji} You do not have permission to execute this.", new DiscordColor(0xFF0000));
             }
             else if(e.Exception is ArgumentException)
             {
                 //Arguments are wrong so tell them so
                 var emoji = DiscordEmoji.FromName(e.Context.Client, ":face_palm:");
-                CommandsCommon.Respond(e.Context,"Error",$"{emoji}Incorrect arguments; see '!help {e.Command?.Name ?? "<Command Name>"}'", new DiscordColor(0xFF0000));
+                await CommandsCommon.Respond(e.Context,"Error",$"{emoji}Incorrect arguments; see '!help {e.Command?.Name ?? "<Command Name>"}'", new DiscordColor(0xFF0000));
             }
             else
             {
-                CommandsCommon.RespondWithError(e.Context, $"{e.Exception.GetType()} - {e.Exception.Message}");
+                await CommandsCommon.RespondWithError(e.Context, $"{e.Exception.GetType()} - {e.Exception.Message}");
             }
         }
     }

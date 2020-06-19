@@ -41,17 +41,17 @@ namespace BaseCommands
                 TimeSpan.FromMinutes(1));
             if (msg == null)
             {
-                CommandsCommon.RespondWithError(ctx,$"Kick by {ctx.User.Mention} for {memberToKick.Mention} was cancelled due to timeout.");
+                await CommandsCommon.RespondWithError(ctx,$"Kick by {ctx.User.Mention} for {memberToKick.Mention} was cancelled due to timeout.");
             }
             else if(msg.Message.Content.ToLower().Trim() == "y")
             {
                 await ctx.Guild.RemoveMemberAsync(memberToKick);
-                CommandsCommon.RespondWithSuccess(ctx,
+                await CommandsCommon.RespondWithSuccess(ctx,
                     $"{memberToKick.Username}#{memberToKick.Discriminator} was kicked for reason '{reason ?? "<unknown>"}'");
             }
             else
             {
-                CommandsCommon.RespondWithWarning(ctx,$"{ctx.User.Mention} did not kick {memberToKick.Mention}",customTitle:"Phew");
+                await CommandsCommon.RespondWithWarning(ctx,$"{ctx.User.Mention} did not kick {memberToKick.Mention}",customTitle:"Phew");
             }
         }
 
@@ -65,7 +65,7 @@ namespace BaseCommands
             await ctx.TriggerTypingAsync();
 
             var banHammer = DiscordEmoji.FromName(ctx.Client,":hammer:");
-            CommandsCommon.Respond(ctx,"Ban?",$"{banHammer}Ban this user: {discordMemberToBan.Mention}? [Y/N]", new DiscordColor(0));
+            await CommandsCommon.Respond(ctx,"Ban?",$"{banHammer}Ban this user: {discordMemberToBan.Mention}? [Y/N]", new DiscordColor(0));
 
             var interactivity = ctx.Client.GetInteractivityModule();
             var confirmMessage = await interactivity.WaitForMessageAsync(msg =>
@@ -74,10 +74,10 @@ namespace BaseCommands
             switch (confirmMessage?.Message.Content.ToLower().Trim())
             {
                     case null:
-                        CommandsCommon.RespondWithError(ctx,$"Ban by {ctx.User.Mention} for {discordMemberToBan.Mention} was cancelled due to timeout.");
+                        await CommandsCommon.RespondWithError(ctx,$"Ban by {ctx.User.Mention} for {discordMemberToBan.Mention} was cancelled due to timeout.");
                         break;
                     case "n":
-                        CommandsCommon.RespondWithWarning(ctx,$"{ctx.User.Mention} did not ban {discordMemberToBan.Mention}",customTitle:"Phew");
+                        await CommandsCommon.RespondWithWarning(ctx,$"{ctx.User.Mention} did not ban {discordMemberToBan.Mention}",customTitle:"Phew");
                         break;
                     case "y":
                         await ctx.Guild.BanMemberAsync(discordMemberToBan);
@@ -227,10 +227,10 @@ namespace BaseCommands
             switch (noFailed)
             {
                 case 0:
-                    CommandsCommon.RespondWithSuccess(ctx, $"{noDeleted} deleted successfully.");
+                    await CommandsCommon.RespondWithSuccess(ctx, $"{noDeleted} deleted successfully.");
                     break;
                 default:
-                    CommandsCommon.RespondWithWarning(ctx, $"{noDeleted} deleted successfully, but {noFailed} failed.");
+                    await CommandsCommon.RespondWithWarning(ctx, $"{noDeleted} deleted successfully, but {noFailed} failed.");
                     break;
             }
         }

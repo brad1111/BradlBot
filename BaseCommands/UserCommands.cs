@@ -94,7 +94,7 @@ namespace BaseCommands
             
             //output github
             output += "•Github Repo: https://www.github.com/thebradad1111/bradlbot";
-            CommandsCommon.Respond(ctx,title,output, new DiscordColor(0x00FF00));
+            await CommandsCommon.Respond(ctx,title,output, new DiscordColor(0x00FF00));
         }
     
     }

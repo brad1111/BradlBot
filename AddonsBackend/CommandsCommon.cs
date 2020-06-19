@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.Entities;
@@ -22,41 +23,41 @@ namespace BradlBot.Commands
             Success
         }
 
-        public static void RespondWithType(RespondType type, CommandContext ctx, string Message)
+        public static async Task RespondWithType(RespondType type, CommandContext ctx, string message)
         {
             switch (type)
             {
                 case RespondType.Error:
-                    RespondWithError(ctx, Message);
+                    await RespondWithError(ctx, message);
                     break;
                 case RespondType.Warning:
-                    RespondWithWarning(ctx, Message);
+                    await RespondWithWarning(ctx, message);
                     break;
                 case RespondType.Success:
-                    RespondWithSuccess(ctx,Message);
+                    await RespondWithSuccess(ctx, message);
                     break;
             }
         }
         
-        public static void RespondWithError(CommandContext ctx, string Error)
+        public static async Task RespondWithError(CommandContext ctx, string Error)
         {
             DiscordEmoji stopEmoji = DiscordEmoji.FromName(ctx.Client,":no_entry:");
-            Respond(ctx, "Error", $"{stopEmoji}{Error}", new DiscordColor(0xFF0000));
+            await Respond(ctx, "Error", $"{stopEmoji}{Error}", new DiscordColor(0xFF0000));
         }
 
-        public static void RespondWithWarning(CommandContext ctx, string warningMessage, string customTitle = null)
+        public static async Task RespondWithWarning(CommandContext ctx, string warningMessage, string customTitle = null)
         {
             DiscordEmoji warningEmoji = DiscordEmoji.FromName(ctx.Client,":warning:");
-            Respond(ctx, customTitle ?? "Warning", $"{warningEmoji}{warningMessage}", new DiscordColor(0xFFF000));
+            await Respond(ctx, customTitle ?? "Warning", $"{warningEmoji}{warningMessage}", new DiscordColor(0xFFF000));
         }
 
-        public static void RespondWithSuccess(CommandContext ctx, string successMessage)
+        public static async Task RespondWithSuccess(CommandContext ctx, string successMessage)
         {
             DiscordEmoji successEmoji = DiscordEmoji.FromName(ctx.Client,":white_check_mark:");
-            Respond(ctx, "Success", $"{successEmoji}{successMessage}", new DiscordColor(0x00FF00));
+            await Respond(ctx, "Success", $"{successEmoji}{successMessage}", new DiscordColor(0x00FF00));
         }
         
-        public static void Respond(CommandContext ctx, string title, string message, DiscordColor color)
+        public static async Task Respond(CommandContext ctx, string title, string message, DiscordColor color)
         {
             DiscordEmbed embed = new DiscordEmbedBuilder()
             {
@@ -64,7 +65,7 @@ namespace BradlBot.Commands
                 Description = message,
                 Color = color
             };
-            ctx.RespondAsync(null, embed: embed);
+            await ctx.RespondAsync(null, embed: embed);
         }
 
 
