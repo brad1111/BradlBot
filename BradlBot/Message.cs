@@ -62,5 +62,16 @@ namespace BradlBot
         {
             return !(e1 == e2);
         }
+
+        public override int GetHashCode()
+        {
+            return ID.GetHashCode();
+        }
+    
+        // override object.Equals
+        public override bool Equals(object obj)
+        {
+            return this == (Message) obj;
+        }
     }
 }

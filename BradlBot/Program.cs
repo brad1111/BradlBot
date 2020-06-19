@@ -146,7 +146,7 @@ namespace BradlBot
                 }
 
                 //Checks to see if ID is stored anywhere
-                if (!_storedMessages.Any(message => message.ID == args.Message.Id))
+                if (_storedMessages.All(message => message.ID != args.Message.Id))
                 {
                     Console.WriteLine("Could not save a message due to it not being stored.");
                     return;
@@ -202,7 +202,7 @@ namespace BradlBot
                     return;
                 }
                 //Check to see if the ID is already there to show update
-                if (!_storedMessages.Any(message => message.ID == args.Message.Id))
+                if (_storedMessages.All(message => message.ID != args.Message.Id))
                 {
                     Console.WriteLine("Could not save a changed message as it was not saved.");
                     return;
@@ -262,7 +262,7 @@ namespace BradlBot
             {
                 //Check for addons
                 string[] files = Directory.GetFiles(AddonDirectory);
-                List<Assembly> potentialAddons = new List<Assembly>();
+                var addonAssemblies = new List<Assembly>();
 
                 foreach (var file in files)
                 {
@@ -285,6 +285,7 @@ namespace BradlBot
                                 IStartup startupTypeInterf = startupTypeObject as IStartup;
                                 startupTypeInterf?.StartupLogic();
                                 Console.WriteLine($"Dynamically Loaded: {startupType.FullName}");
+                                addonAssemblies.Add(startupType.Assembly);
                             }
                         }
                         catch (Exception e)
@@ -294,7 +295,8 @@ namespace BradlBot
                         }
                     }
                 }
-                
+
+                CommandsCommon.AddonAssemblies = addonAssemblies;
             }
             else
             {
