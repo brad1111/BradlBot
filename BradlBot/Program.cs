@@ -210,7 +210,11 @@ namespace BradlBot
                 //Check to see if the log was modified (don't log the logs)
                 if(args.Channel.Name.ToLower().Trim() == "logs")
                     return;
-                
+
+                //Our own messages can sometimes cause problems so disable this feature for bots
+                if(args.Author.IsBot)
+                    return;
+
                 //Find correct message (has to be last in case it's been edited before)
                 var correctStoredMessage = _storedMessages.FindLast(message => message.ID == args.Message.Id);
                 
