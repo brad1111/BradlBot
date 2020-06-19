@@ -14,7 +14,7 @@ namespace BradlBot.Commands
         public async Task Shutdown(CommandContext ctx)
         {
             await ctx.TriggerTypingAsync();
-            CommandsCommon.RespondWithSuccess(ctx,"Shutting down");
+            await CommandsCommon.RespondWithSuccess(ctx,"Shutting down");
             await Task.Delay(100);
             Environment.Exit(0);
         }
@@ -26,7 +26,7 @@ namespace BradlBot.Commands
         public async Task Restart(CommandContext ctx)
         {
             await ctx.TriggerTypingAsync();
-            CommandsCommon.RespondWithWarning(ctx,"Restarting");
+            await CommandsCommon.RespondWithWarning(ctx,"Restarting");
             await ctx.Client.DisconnectAsync();
             await Task.Delay(1000);
             Program.Main(new string[0]);
