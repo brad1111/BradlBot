@@ -14,7 +14,7 @@ using DSharpPlus.Entities;
 
 namespace BaseCommands
 {
-    public class UserCommands
+    public class UserCommands : BaseCommandModule
     {
 
         private static readonly TimeSpan second = TimeSpan.FromSeconds(1);

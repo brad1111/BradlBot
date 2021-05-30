@@ -14,7 +14,7 @@ namespace BradlBot.Commands
         public static Assembly FrontEndAssembly { get; set; } 
         public static List<AssemblyName> ReferencedAssemblies { get; set; }
         public static List<Assembly> AddonAssemblies { get; set; }
-        public static CommandsNextModule Commands { get; set; }
+        public static CommandsNextExtension Commands { get; set; }
         
         public enum RespondType
         {

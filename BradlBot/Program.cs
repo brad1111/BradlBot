@@ -3,20 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
- using System.Runtime.InteropServices.ComTypes;
- using System.Runtime.Loader;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
- using AddonsBackend;
- using BradlBot.Commands;
+using AddonsBackend;
+using BradlBot.Commands;
 using DSharpPlus;
 using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Exceptions;
- using DSharpPlus.Entities;
- using DSharpPlus.EventArgs;
- using DSharpPlus.Interactivity;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Logging;
 
 
 namespace BradlBot
@@ -25,13 +25,13 @@ namespace BradlBot
     {
         public DiscordClient Client { get; set; }
 
-        public CommandsNextModule Commands
+        public CommandsNextExtension Commands
         {
             get => CommandsCommon.Commands;
             set => CommandsCommon.Commands = value;
         }
 
-        static InteractivityModule Interactivity { get; set; }
+        static InteractivityExtension Interactivity { get; set; }
 
         private static string AddonDirectory
         {
@@ -99,8 +99,7 @@ namespace BradlBot
                     TokenType = TokenType.Bot,
 
                     AutoReconnect = true,
-                    LogLevel = LogLevel.Debug,
-                    UseInternalLogHandler = true,
+                    MinimumLogLevel = Microsoft.Extensions.Logging.LogLevel.Debug,
                 };
                 
                 await SetupBotAsync(cfg, cfgjson);
@@ -131,11 +130,11 @@ namespace BradlBot
             this.Client.Ready += this.Client_Ready;
             this.Client.GuildAvailable += this.Client_GuildAvailable;
             this.Client.ClientErrored += this.Client_ClientError;
-            this.Client.MessageCreated += async args =>
+            this.Client.MessageCreated += async (client, args) =>
             {
                 _storedMessages.Add(Message.GetFromDiscordMessage(args.Message));
             };
-            this.Client.MessageDeleted += async args =>
+            this.Client.MessageDeleted += async (client, args) =>
             {
                 //Checks to see if list has anything in it before checking
                 if (_storedMessages.Count == 0)
@@ -184,7 +183,7 @@ namespace BradlBot
                 try
                 {
                     var logsChannel =
-                        args.Guild.Channels.First(channels => channels.Name.ToLower().Trim() == "logs");
+                        args.Guild.Channels.Select(channelsPair => channelsPair.Value).First(channels => channels.Name.ToLower().Trim() == "logs");
                     await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
                 }
                 catch (InvalidOperationException)
@@ -193,7 +192,7 @@ namespace BradlBot
                 }
             };
             
-            this.Client.MessageUpdated += async args =>
+            this.Client.MessageUpdated += async (client, args) =>
             {
                 //Check to see if list has anything in it before checking
                 if (_storedMessages.Count == 0)
@@ -239,7 +238,9 @@ namespace BradlBot
                 //Find logs channel and send to logs channel
                 try
                 {
-                    var logsChannel = args.Guild.Channels.First(channel => channel.Name.ToLower().Trim() == "logs");
+                    var logsChannel = args.Guild.Channels
+                                                .Select(channelPair => channelPair.Value)
+                                                .First(channel => channel.Name.ToLower().Trim() == "logs");
                     await logsChannel.SendMessageAsync(null, embed: embeddedMessage);
                 }
                 catch (InvalidOperationException)
@@ -250,7 +251,7 @@ namespace BradlBot
             //Comands config
             var ccfg = new DSharpPlus.CommandsNext.CommandsNextConfiguration()
             {
-                StringPrefix = cfgjson.CommandPrefix,
+                StringPrefixes = new List<string>{cfgjson.CommandPrefix},
                 EnableDms = true,
                 EnableMentionPrefix = true
             };
@@ -363,39 +364,39 @@ namespace BradlBot
             await developerStreamWriter.FlushAsync();
         }
 
-        private Task Client_Ready(ReadyEventArgs e)
+        private Task Client_Ready(DiscordClient client, ReadyEventArgs e)
         {
             //lets log that it's occured
-            e.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot","Client is ready to process events", DateTime.Now);
+            client.Logger.LogInformation(new EventId(), "BradlBot","Client is ready to process events", DateTime.Now);
             //return a completed task
             return Task.CompletedTask;
         }
 
-        private Task Client_GuildAvailable(GuildCreateEventArgs e)
+        private Task Client_GuildAvailable(DiscordClient client, GuildCreateEventArgs e)
         {
             //Lets log name of guild that was sent
-            e.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot",$"Guild available: {e.Guild.Name}",DateTime.Now);
+            client.Logger.LogInformation(new EventId(), "BradlBot",$"Guild available: {e.Guild.Name}",DateTime.Now);
             return Task.CompletedTask;
         }
 
-        private Task Client_ClientError(ClientErrorEventArgs e)
+        private Task Client_ClientError(DiscordClient client, ClientErrorEventArgs e)
         {
             //Log guild that was sent
-            e.Client.DebugLogger.LogMessage(LogLevel.Error, "BradlBot",$"Exception: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);
+            client.Logger.LogError(new EventId(), "BradlBot",$"Exception: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);
             return Task.CompletedTask;
         }
 
-        private Task Command_CommandExecuted(CommandExecutionEventArgs e)
+        private Task Command_CommandExecuted(CommandsNextExtension command, CommandExecutionEventArgs e)
         {
-            e.Context.Client.DebugLogger.LogMessage(LogLevel.Info, "BradlBot",
+            e.Context.Client.Logger.LogInformation(new EventId(), "BradlBot",
                 $"{e.Context.User.Username} successfully executed '{e.Command.QualifiedName}' on {e.Context.Guild?.Name ?? e.Context.User.Username} - {e.Context.Channel.Name}",
                 DateTime.Now);
             return Task.CompletedTask;
         }
 
-        private async Task Command_CommandError(CommandErrorEventArgs e)
+        private async Task Command_CommandError(CommandsNextExtension command, CommandErrorEventArgs e)
         {
-            e.Context.Client.DebugLogger.LogMessage(LogLevel.Error, "BradlBot",$"{e.Context.User.Username} tried to run '{e.Command?.QualifiedName ?? "<invalid_cmd>"}' on {e.Context.Guild.Name} - {e.Context.Channel.Name} but it gave the error: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);   
+            e.Context.Client.Logger.LogError(new EventId(), "BradlBot",$"{e.Context.User.Username} tried to run '{e.Command?.QualifiedName ?? "<invalid_cmd>"}' on {e.Context.Guild.Name} - {e.Context.Channel.Name} but it gave the error: {e.Exception.GetType()}: {e.Exception.Message}", DateTime.Now);   
                     
             //Check to see if lack of permisions
             if (e.Exception is ChecksFailedException)

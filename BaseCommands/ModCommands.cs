@@ -7,11 +7,11 @@ using DSharpPlus.CommandsNext;
 using DSharpPlus.CommandsNext.Attributes;
 using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
-using DSharpPlus.Interactivity;
+using DSharpPlus.Interactivity.Extensions;
 
 namespace BaseCommands
 {
-    public class ModCommands
+    public class ModCommands : BaseCommandModule
     {   
         
         [RequirePermissions(Permissions.KickMembers)]
@@ -33,19 +33,19 @@ namespace BaseCommands
             
             await ctx.RespondAsync(null, embed: embeddedKick);
 
-            var interactivity = ctx.Client.GetInteractivityModule();
+            var interactivity = ctx.Client.GetInteractivity();
             //Wait for message from user that is either Y or N
             var msg = await interactivity.WaitForMessageAsync(
                 umsg => umsg.Author.Id == ctx.User.Id &&
                         (umsg.Content.ToLower().Trim() == "y" || umsg.Content.ToLower() == "n"),
                 TimeSpan.FromMinutes(1));
-            if (msg == null)
+            if (msg.TimedOut)
             {
                 await CommandsCommon.RespondWithError(ctx,$"Kick by {ctx.User.Mention} for {memberToKick.Mention} was cancelled due to timeout.");
             }
-            else if(msg.Message.Content.ToLower().Trim() == "y")
+            else if(msg.Result.Content.ToLower().Trim() == "y")
             {
-                await ctx.Guild.RemoveMemberAsync(memberToKick);
+                await memberToKick.RemoveAsync();
                 await CommandsCommon.RespondWithSuccess(ctx,
                     $"{memberToKick.Username}#{memberToKick.Discriminator} was kicked for reason '{reason ?? "<unknown>"}'");
             }
@@ -67,11 +67,11 @@ namespace BaseCommands
             var banHammer = DiscordEmoji.FromName(ctx.Client,":hammer:");
             await CommandsCommon.Respond(ctx,"Ban?",$"{banHammer}Ban this user: {discordMemberToBan.Mention}? [Y/N]", new DiscordColor(0));
 
-            var interactivity = ctx.Client.GetInteractivityModule();
+            var interactivity = ctx.Client.GetInteractivity();
             var confirmMessage = await interactivity.WaitForMessageAsync(msg =>
                 msg.Author == ctx.Member &&
                 (msg.Content.ToLower().Trim() == "y" || msg.Content.ToLower().Trim() == "n"), TimeSpan.FromMinutes(1));
-            switch (confirmMessage?.Message.Content.ToLower().Trim())
+            switch (confirmMessage.Result.Content.ToLower().Trim())
             {
                     case null:
                         await CommandsCommon.RespondWithError(ctx,$"Ban by {ctx.User.Mention} for {discordMemberToBan.Mention} was cancelled due to timeout.");

@@ -35,7 +35,7 @@ namespace BradlBot
                 Author = dmessage.Author,
                 Content = dmessage.Content,
                 Timestamp = dmessage.Timestamp,
-                EditedTimestamp = dmessage.IsEdited ? dmessage.EditedTimestamp : new DateTimeOffset(),
+                EditedTimestamp = dmessage.EditedTimestamp ?? new DateTimeOffset(),
                 IsEdited = dmessage.IsEdited,
                 IsTTS = dmessage.IsTTS,
                 MentionEveryone = dmessage.MentionEveryone,

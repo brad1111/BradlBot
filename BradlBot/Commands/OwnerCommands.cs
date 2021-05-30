@@ -6,7 +6,7 @@ using DSharpPlus.CommandsNext.Attributes;
 
 namespace BradlBot.Commands
 {
-    public class OwnerCommands
+    public class OwnerCommands : BaseCommandModule
     {
         [RequireOwner]
         [Command("shutdown")]
